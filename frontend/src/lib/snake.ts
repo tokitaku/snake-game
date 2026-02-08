@@ -159,7 +159,10 @@ export function stepGame(
   if (ateTarget) {
     const isCycleCompleted = state.targetLetterIndex === ALPHABET.length - 1;
     if (questionFormat === 'random') {
-      nextTargetLetterIndex = Math.floor(rng() * ALPHABET.length);
+      // Ensure a different letter is selected to avoid confusion
+      do {
+        nextTargetLetterIndex = Math.floor(rng() * ALPHABET.length);
+      } while (nextTargetLetterIndex === state.targetLetterIndex && ALPHABET.length > 1);
     } else {
       nextTargetLetterIndex = (state.targetLetterIndex + 1) % ALPHABET.length;
     }
