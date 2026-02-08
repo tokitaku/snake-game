@@ -48,13 +48,13 @@ function App() {
 
     const tickMs = SPEED_VALUES[settings.speed];
     const timer = window.setInterval(() => {
-      setGameState((prev) => stepGame(prev, DEFAULT_GRID_SIZE, Math.random, settings.questionFormat));
+      setGameState((prev) => stepGame(prev, DEFAULT_GRID_SIZE, Math.random));
     }, tickMs);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [isRunning, settings.speed, settings.questionFormat]);
+  }, [isRunning, settings.speed]);
 
   useEffect(() => {
     if (!hasStarted || !gameState.gameOver || submittedRef.current) {
@@ -121,6 +121,7 @@ function App() {
 
   const handleSettingsOpen = useCallback(() => {
     setIsSettingsOpen(true);
+    setIsPaused(true);
   }, []);
 
   const handleSettingsClose = useCallback(() => {
@@ -129,6 +130,10 @@ function App() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (isSettingsOpen) {
+        return;
+      }
+
       const key = event.key.toLowerCase();
 
       if (key === ' ') {
@@ -174,7 +179,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [applyDirection, gameState.gameOver, hasStarted, restartGame, startIfNeeded, togglePause]);
+  }, [applyDirection, gameState.gameOver, hasStarted, isSettingsOpen, restartGame, startIfNeeded, togglePause]);
 
   const targetKey = gameState.targetCell
     ? `${gameState.targetCell.x},${gameState.targetCell.y}`
