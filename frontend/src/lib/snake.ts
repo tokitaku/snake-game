@@ -101,6 +101,7 @@ export function stepGame(
   state: GameState,
   gridSize = DEFAULT_GRID_SIZE,
   rng: () => number = Math.random,
+  questionFormat: 'sequential' | 'random' = 'sequential',
 ): GameState {
   if (state.gameOver) {
     return state;
@@ -157,7 +158,11 @@ export function stepGame(
 
   if (ateTarget) {
     const isCycleCompleted = state.targetLetterIndex === ALPHABET.length - 1;
-    nextTargetLetterIndex = (state.targetLetterIndex + 1) % ALPHABET.length;
+    if (questionFormat === 'random') {
+      nextTargetLetterIndex = Math.floor(rng() * ALPHABET.length);
+    } else {
+      nextTargetLetterIndex = (state.targetLetterIndex + 1) % ALPHABET.length;
+    }
     nextCompletedCycles = isCycleCompleted ? state.completedCycles + 1 : state.completedCycles;
     nextTargetCell = placeTargetCell(nextSnake, gridSize, rng);
     nextScore += 1;
