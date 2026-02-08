@@ -9,12 +9,15 @@ export type GameState = {
   snake: Point[];
   direction: Direction;
   pendingDirection: Direction;
-  food: Point | null;
+  targetCell: Point | null;
+  targetLetterIndex: number;
+  completedCycles: number;
   score: number;
   gameOver: boolean;
 };
 
 export const DEFAULT_GRID_SIZE = 20;
+export const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const DIRECTION_VECTORS: Record<Direction, Point> = {
   up: { x: 0, y: -1 },
@@ -45,13 +48,20 @@ export function createInitialState(
     snake,
     direction: 'right',
     pendingDirection: 'right',
-    food: placeFood(snake, gridSize, rng),
+    targetCell: placeTargetCell(snake, gridSize, rng),
+    targetLetterIndex: 0,
+    completedCycles: 0,
     score: 0,
     gameOver: false,
   };
 }
 
-export function placeFood(
+export function getTargetLetter(targetLetterIndex: number): string {
+  const normalizedIndex = ((targetLetterIndex % ALPHABET.length) + ALPHABET.length) % ALPHABET.length;
+  return ALPHABET[normalizedIndex];
+}
+
+export function placeTargetCell(
   snake: Point[],
   gridSize = DEFAULT_GRID_SIZE,
   rng: () => number = Math.random,
@@ -116,13 +126,13 @@ export function stepGame(
     };
   }
 
-  const ateFood =
-    state.food !== null &&
-    nextHead.x === state.food.x &&
-    nextHead.y === state.food.y;
+  const ateTarget =
+    state.targetCell !== null &&
+    nextHead.x === state.targetCell.x &&
+    nextHead.y === state.targetCell.y;
 
   // 食べていないときは末尾が移動するため、衝突判定から末尾を除外する。
-  const bodyToCheck = ateFood ? state.snake : state.snake.slice(0, -1);
+  const bodyToCheck = ateTarget ? state.snake : state.snake.slice(0, -1);
   const hitSelf = bodyToCheck.some(
     (segment) => segment.x === nextHead.x && segment.y === nextHead.y,
   );
@@ -136,18 +146,31 @@ export function stepGame(
 
   const nextSnake = [nextHead, ...state.snake];
 
-  if (!ateFood) {
+  if (!ateTarget) {
     nextSnake.pop();
   }
 
-  const nextFood = ateFood ? placeFood(nextSnake, gridSize, rng) : state.food;
+  let nextTargetLetterIndex = state.targetLetterIndex;
+  let nextCompletedCycles = state.completedCycles;
+  let nextTargetCell = state.targetCell;
+  let nextScore = state.score;
+
+  if (ateTarget) {
+    const isCycleCompleted = state.targetLetterIndex === ALPHABET.length - 1;
+    nextTargetLetterIndex = (state.targetLetterIndex + 1) % ALPHABET.length;
+    nextCompletedCycles = isCycleCompleted ? state.completedCycles + 1 : state.completedCycles;
+    nextTargetCell = placeTargetCell(nextSnake, gridSize, rng);
+    nextScore += 1;
+  }
 
   return {
     snake: nextSnake,
     direction: state.pendingDirection,
     pendingDirection: state.pendingDirection,
-    food: nextFood,
-    score: ateFood ? state.score + 1 : state.score,
-    gameOver: nextFood === null,
+    targetCell: nextTargetCell,
+    targetLetterIndex: nextTargetLetterIndex,
+    completedCycles: nextCompletedCycles,
+    score: nextScore,
+    gameOver: nextTargetCell === null,
   };
 }
