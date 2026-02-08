@@ -3,6 +3,7 @@ import { fetchHighScore, submitHighScore } from './lib/api';
 import {
   createInitialState,
   DEFAULT_GRID_SIZE,
+  getTargetLetter,
   setDirection,
   stepGame,
   type Direction,
@@ -11,7 +12,7 @@ import {
 
 const TICK_MS = 120;
 
-type CellType = 'empty' | 'head' | 'body' | 'food';
+type CellType = 'empty' | 'head' | 'body' | 'target';
 type SnakeCellType = 'head' | 'body';
 
 function App() {
@@ -160,7 +161,10 @@ function App() {
     };
   }, [applyDirection, gameState.gameOver, hasStarted, restartGame, startIfNeeded, togglePause]);
 
-  const foodKey = gameState.food ? `${gameState.food.x},${gameState.food.y}` : null;
+  const targetKey = gameState.targetCell
+    ? `${gameState.targetCell.x},${gameState.targetCell.y}`
+    : null;
+  const targetLetter = getTargetLetter(gameState.targetLetterIndex);
 
   const snakeCells = useMemo(() => {
     const map = new Map<string, SnakeCellType>();
@@ -182,8 +186,8 @@ function App() {
       let type: CellType = 'empty';
       const snakeType = snakeCells.get(key);
 
-      if (foodKey === key) {
-        type = 'food';
+      if (targetKey === key) {
+        type = 'target';
       }
 
       if (snakeType) {
@@ -191,9 +195,12 @@ function App() {
       }
 
       let className = 'h-4 w-4 border border-stone-200 bg-board sm:h-5 sm:w-5';
+      let content: string | null = null;
 
-      if (type === 'food') {
-        className = 'h-4 w-4 border border-stone-200 bg-food sm:h-5 sm:w-5';
+      if (type === 'target') {
+        className =
+          'grid h-4 w-4 place-items-center border border-stone-200 bg-amber-300 text-[10px] font-bold text-stone-900 sm:h-5 sm:w-5 sm:text-xs';
+        content = targetLetter;
       }
 
       if (type === 'body') {
@@ -204,9 +211,9 @@ function App() {
         className = 'h-4 w-4 border border-stone-200 bg-snake-head sm:h-5 sm:w-5';
       }
 
-      return <div key={key} className={className} />;
+      return <div key={key} className={className}>{content}</div>;
     });
-  }, [foodKey, snakeCells]);
+  }, [snakeCells, targetKey, targetLetter]);
 
   const statusMessage = (() => {
     if (!hasStarted) {
@@ -230,6 +237,7 @@ function App() {
         <header className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold tracking-wide">Snake</h1>
           <p className="ml-auto text-sm text-stone-600">Score: {gameState.score}</p>
+          <p className="text-sm text-stone-600">Next Letter: {targetLetter}</p>
           <p className="text-sm text-stone-600">
             High Score: {highScore === null ? '--' : highScore}
           </p>
@@ -303,7 +311,7 @@ function App() {
         </section>
 
         <p className="mt-4 text-sm text-stone-600">
-          操作: Arrow keys / WASD / Space。{apiError ? `API: ${apiError}` : 'API接続: OK'}
+          操作: Arrow keys / WASD / Space。A から Z まで順番に集める。{apiError ? `API: ${apiError}` : 'API接続: OK'}
         </p>
       </section>
     </main>
