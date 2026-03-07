@@ -1,14 +1,14 @@
 export type GameSpeed = 'slow' | 'normal' | 'fast';
-export type QuestionFormat = 'sequential' | 'random';
+export type DummyCount = 2 | 3 | 4 | 5;
 
 export type GameSettings = {
   speed: GameSpeed;
-  questionFormat: QuestionFormat;
+  dummyCount: DummyCount;
 };
 
 export const DEFAULT_SETTINGS: GameSettings = {
   speed: 'normal',
-  questionFormat: 'sequential',
+  dummyCount: 2,
 };
 
 export const SPEED_VALUES: Record<GameSpeed, number> = {
@@ -23,7 +23,9 @@ export const SPEED_LABELS: Record<GameSpeed, string> = {
   fast: '速い (Fast)',
 };
 
-export const QUESTION_FORMAT_LABELS: Record<QuestionFormat, string> = {
-  sequential: 'A-Z順番 (Sequential)',
-  random: 'ランダム (Random)',
+export const DUMMY_COUNT_LABELS: Record<DummyCount, string> = {
+  2: '2個 (合計3個)',
+  3: '3個 (合計4個)',
+  4: '4個 (合計5個)',
+  5: '5個 (合計6個)',
 };
