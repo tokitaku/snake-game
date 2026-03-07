@@ -165,6 +165,7 @@ export function useSnakeGame(gridSize = DEFAULT_GRID_SIZE): UseSnakeGameResult {
   const nextLetter = getTargetLetter(gameState.targetLetterIndex);
 
   const saveSettings = useCallback((nextSettings: GameSettings) => {
+    // speed は即時反映されるが、dummyCount は GameState を作り直す restartGame 後に反映される。
     setSettings(nextSettings);
   }, []);
 

@@ -10,6 +10,15 @@ type SettingsModalProps = {
 };
 
 const DUMMY_COUNT_OPTIONS = [2, 3, 4, 5] as const satisfies readonly DummyCount[];
+const MODAL_TITLE_ID = 'settings-modal-title';
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'a[href]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
 
 export function SettingsModal({ isOpen, settings, onClose, onSave }: SettingsModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -42,23 +51,57 @@ export function SettingsModal({ isOpen, settings, onClose, onSave }: SettingsMod
     onSave({ ...settings, dummyCount });
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      onClose();
+      event.stopPropagation();
+      return;
+    }
+
+    if (event.key !== 'Tab') {
+      event.stopPropagation();
+      return;
+    }
+
+    const focusableElements = dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+
+    if (!focusableElements || focusableElements.length === 0) {
+      event.preventDefault();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    const activeElement =
+      document.activeElement instanceof HTMLElement ? document.activeElement : dialogRef.current;
+
+    if (event.shiftKey && (activeElement === dialogRef.current || activeElement === firstElement)) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  };
+
   return (
     <div
       ref={dialogRef}
       className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
       role="dialog"
       aria-modal="true"
+      aria-labelledby={MODAL_TITLE_ID}
       tabIndex={-1}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          onClose();
-        }
-        event.stopPropagation();
-      }}
+      onKeyDown={handleKeyDown}
     >
       <div className="w-full max-w-md rounded-lg border border-stone-300 bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">設定 (Settings)</h2>
+          <h2 id={MODAL_TITLE_ID} className="text-xl font-semibold">
+            設定 (Settings)
+          </h2>
           <button
             type="button"
             onClick={onClose}
