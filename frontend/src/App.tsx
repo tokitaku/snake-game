@@ -7,17 +7,18 @@ import {
   setDirection,
   stepGame,
   type Direction,
+  type FoodItem,
   type GameState,
 } from './lib/snake';
 import { DEFAULT_SETTINGS, SPEED_VALUES, type GameSettings } from './lib/settings';
 import { Settings } from './Settings';
 
-type CellType = 'empty' | 'head' | 'body' | 'target';
+type CellType = 'empty' | 'head' | 'body' | 'food';
 type SnakeCellType = 'head' | 'body';
 
 function App() {
   const [gameState, setGameState] = useState<GameState>(() =>
-    createInitialState(DEFAULT_GRID_SIZE),
+    createInitialState(DEFAULT_GRID_SIZE, DEFAULT_SETTINGS),
   );
   const [hasStarted, setHasStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
@@ -91,12 +92,12 @@ function App() {
   );
 
   const restartGame = useCallback(() => {
-    setGameState(createInitialState(DEFAULT_GRID_SIZE));
+    setGameState(createInitialState(DEFAULT_GRID_SIZE, settings));
     setHasStarted(true);
     setIsPaused(false);
     setApiError(null);
     submittedRef.current = false;
-  }, []);
+  }, [settings]);
 
   const togglePause = useCallback(() => {
     if (!hasStarted || gameState.gameOver) {
@@ -181,9 +182,6 @@ function App() {
     };
   }, [applyDirection, gameState.gameOver, hasStarted, isSettingsOpen, restartGame, startIfNeeded, togglePause]);
 
-  const targetKey = gameState.targetCell
-    ? `${gameState.targetCell.x},${gameState.targetCell.y}`
-    : null;
   const targetLetter = getTargetLetter(gameState.targetLetterIndex);
 
   const snakeCells = useMemo(() => {
@@ -197,6 +195,17 @@ function App() {
     return map;
   }, [gameState.snake]);
 
+  const foodCells = useMemo(() => {
+    const map = new Map<string, FoodItem>();
+
+    gameState.foods.forEach((food) => {
+      const key = `${food.cell.x},${food.cell.y}`;
+      map.set(key, food);
+    });
+
+    return map;
+  }, [gameState.foods]);
+
   const cells = useMemo(() => {
     return Array.from({ length: DEFAULT_GRID_SIZE * DEFAULT_GRID_SIZE }, (_, i) => {
       const x = i % DEFAULT_GRID_SIZE;
@@ -205,9 +214,10 @@ function App() {
 
       let type: CellType = 'empty';
       const snakeType = snakeCells.get(key);
+      const food = foodCells.get(key);
 
-      if (targetKey === key) {
-        type = 'target';
+      if (food) {
+        type = 'food';
       }
 
       if (snakeType) {
@@ -217,10 +227,10 @@ function App() {
       let className = 'h-4 w-4 border border-stone-200 bg-board sm:h-5 sm:w-5';
       let content: string | null = null;
 
-      if (type === 'target') {
+      if (type === 'food') {
         className =
           'grid h-4 w-4 place-items-center border border-stone-200 bg-amber-300 text-[10px] font-bold text-stone-900 sm:h-5 sm:w-5 sm:text-xs';
-        content = targetLetter;
+        content = food?.letter ?? null;
       }
 
       if (type === 'body') {
@@ -233,7 +243,7 @@ function App() {
 
       return <div key={key} className={className}>{content}</div>;
     });
-  }, [snakeCells, targetKey, targetLetter]);
+  }, [foodCells, snakeCells]);
 
   const statusMessage = (() => {
     if (!hasStarted) {
@@ -338,7 +348,7 @@ function App() {
         </section>
 
         <p className="mt-4 text-sm text-stone-600">
-          操作: Arrow keys / WASD / Space。A から Z まで順番に集める。{apiError ? `API: ${apiError}` : 'API接続: OK'}
+          操作: Arrow keys / WASD / Space。A から Z まで順番に集め、ダミー文字に触れると終了。{apiError ? `API: ${apiError}` : 'API接続: OK'}
         </p>
       </section>
 

@@ -1,5 +1,5 @@
-import type { GameSettings, GameSpeed } from './lib/settings';
-import { SPEED_LABELS } from './lib/settings';
+import type { DummyCount, GameSettings, GameSpeed } from './lib/settings';
+import { DUMMY_COUNT_LABELS, SPEED_LABELS } from './lib/settings';
 
 type SettingsProps = {
   isOpen: boolean;
@@ -15,6 +15,10 @@ export function Settings({ isOpen, settings, onClose, onSave }: SettingsProps) {
 
   const handleSpeedChange = (speed: GameSpeed) => {
     onSave({ ...settings, speed });
+  };
+
+  const handleDummyCountChange = (dummyCount: DummyCount) => {
+    onSave({ ...settings, dummyCount });
   };
 
   return (
@@ -58,6 +62,26 @@ export function Settings({ isOpen, settings, onClose, onSave }: SettingsProps) {
                     className="h-4 w-4"
                   />
                   <span className="text-sm">{SPEED_LABELS[speed]}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-stone-700">ダミーの数</h3>
+            <p className="mb-2 text-xs text-stone-500">変更は次回リスタートから反映されます。</p>
+            <div className="space-y-2">
+              {(Object.keys(DUMMY_COUNT_LABELS) as unknown as DummyCount[]).map((dummyCount) => (
+                <label key={dummyCount} className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    name="dummyCount"
+                    value={dummyCount}
+                    checked={settings.dummyCount === dummyCount}
+                    onChange={() => handleDummyCountChange(dummyCount)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">{DUMMY_COUNT_LABELS[dummyCount]}</span>
                 </label>
               ))}
             </div>
