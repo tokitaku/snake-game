@@ -2,30 +2,43 @@ import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import {
   createInitialState,
   DEFAULT_GRID_SIZE,
+  getTargetLetter,
   setDirection,
   stepGame,
   type Direction,
   type GameState,
 } from '@/features/snake-game/model/snake';
+import {
+  DEFAULT_SETTINGS,
+  SPEED_VALUES,
+  type GameSettings,
+} from '@/features/snake-game/model/settings';
 
 type UseSnakeGameResult = {
   gameState: GameState;
+  settings: GameSettings;
   hasStarted: boolean;
   isPaused: boolean;
+  isSettingsOpen: boolean;
+  nextLetter: string;
   statusMessage: string;
   applyDirection: (direction: Direction) => void;
   restartGame: () => void;
   togglePause: () => void;
   startIfNeeded: () => void;
+  openSettings: () => void;
+  closeSettings: () => void;
+  saveSettings: (settings: GameSettings) => void;
 };
 
-export function useSnakeGame(
-  gridSize = DEFAULT_GRID_SIZE,
-  tickMs = 120,
-): UseSnakeGameResult {
-  const [gameState, setGameState] = useState<GameState>(() => createInitialState(gridSize));
+export function useSnakeGame(gridSize = DEFAULT_GRID_SIZE): UseSnakeGameResult {
+  const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
+  const [gameState, setGameState] = useState<GameState>(() =>
+    createInitialState(gridSize, DEFAULT_SETTINGS),
+  );
   const [hasStarted, setHasStarted] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const isRunning = hasStarted && !isPaused && !gameState.gameOver;
 
@@ -47,10 +60,10 @@ export function useSnakeGame(
   );
 
   const restartGame = useCallback(() => {
-    setGameState(createInitialState(gridSize));
+    setGameState(createInitialState(gridSize, settings));
     setHasStarted(true);
     setIsPaused(false);
-  }, [gridSize]);
+  }, [gridSize, settings]);
 
   const togglePause = useCallback(() => {
     if (!hasStarted || gameState.gameOver) {
@@ -61,6 +74,10 @@ export function useSnakeGame(
   }, [gameState.gameOver, hasStarted]);
 
   const handleKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (isSettingsOpen) {
+      return;
+    }
+
     const key = event.key.toLowerCase();
 
     if (key === ' ') {
@@ -106,6 +123,8 @@ export function useSnakeGame(
       return;
     }
 
+    const tickMs = SPEED_VALUES[settings.speed];
+
     // 現在の state を使って進行するため、更新関数の形で tick を適用する。
     const timer = window.setInterval(() => {
       setGameState((previousState) => stepGame(previousState, gridSize));
@@ -114,7 +133,7 @@ export function useSnakeGame(
     return () => {
       window.clearInterval(timer);
     };
-  }, [gridSize, isRunning, tickMs]);
+  }, [gridSize, isRunning, settings.speed]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -136,14 +155,35 @@ export function useSnakeGame(
         ? 'Paused'
         : 'Playing';
 
+  const nextLetter = getTargetLetter(gameState.targetLetterIndex);
+
+  const saveSettings = useCallback((nextSettings: GameSettings) => {
+    setSettings(nextSettings);
+  }, []);
+
+  const openSettings = useCallback(() => {
+    setIsSettingsOpen(true);
+    setIsPaused(true);
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    setIsSettingsOpen(false);
+  }, []);
+
   return {
     gameState,
+    settings,
     hasStarted,
     isPaused,
+    isSettingsOpen,
+    nextLetter,
     statusMessage,
     applyDirection,
     restartGame,
     togglePause,
     startIfNeeded,
+    openSettings,
+    closeSettings,
+    saveSettings,
   };
 }

@@ -1,18 +1,16 @@
 import { useMemo } from 'react';
-import type { Point } from '@/features/snake-game/model/snake';
+import type { FoodItem, Point } from '@/features/snake-game/model/snake';
 
 type CellType = 'empty' | 'head' | 'body' | 'food';
 type SnakeCellType = 'head' | 'body';
 
 type GameBoardProps = {
   snake: Point[];
-  food: Point | null;
+  foods: FoodItem[];
   gridSize: number;
 };
 
-export function GameBoard({ snake, food, gridSize }: GameBoardProps) {
-  const foodKey = food ? `${food.x},${food.y}` : null;
-
+export function GameBoard({ snake, foods, gridSize }: GameBoardProps) {
   const snakeCells = useMemo(() => {
     const cellMap = new Map<string, SnakeCellType>();
 
@@ -24,6 +22,17 @@ export function GameBoard({ snake, food, gridSize }: GameBoardProps) {
     return cellMap;
   }, [snake]);
 
+  const foodCells = useMemo(() => {
+    const cellMap = new Map<string, FoodItem>();
+
+    foods.forEach((food) => {
+      const key = `${food.cell.x},${food.cell.y}`;
+      cellMap.set(key, food);
+    });
+
+    return cellMap;
+  }, [foods]);
+
   const cells = useMemo(() => {
     return Array.from({ length: gridSize * gridSize }, (_, index) => {
       const x = index % gridSize;
@@ -32,8 +41,9 @@ export function GameBoard({ snake, food, gridSize }: GameBoardProps) {
 
       let type: CellType = 'empty';
       const snakeType = snakeCells.get(key);
+      const food = foodCells.get(key);
 
-      if (foodKey === key) {
+      if (food) {
         type = 'food';
       }
 
@@ -42,9 +52,12 @@ export function GameBoard({ snake, food, gridSize }: GameBoardProps) {
       }
 
       let className = 'h-4 w-4 border border-stone-200 bg-board sm:h-5 sm:w-5';
+      let content: string | null = null;
 
       if (type === 'food') {
-        className = 'h-4 w-4 border border-stone-200 bg-food sm:h-5 sm:w-5';
+        className =
+          'grid h-4 w-4 place-items-center border border-stone-200 bg-amber-300 text-[10px] font-bold text-stone-900 sm:h-5 sm:w-5 sm:text-xs';
+        content = food?.letter ?? null;
       }
 
       if (type === 'body') {
@@ -55,9 +68,13 @@ export function GameBoard({ snake, food, gridSize }: GameBoardProps) {
         className = 'h-4 w-4 border border-stone-200 bg-snake-head sm:h-5 sm:w-5';
       }
 
-      return <div key={key} className={className} />;
+      return (
+        <div key={key} className={className}>
+          {content}
+        </div>
+      );
     });
-  }, [foodKey, gridSize, snakeCells]);
+  }, [foodCells, gridSize, snakeCells]);
 
   return (
     <div

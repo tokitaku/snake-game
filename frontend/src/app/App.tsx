@@ -6,12 +6,27 @@ import {
   GameControls,
   GameOverlay,
   MobileDirectionPad,
+  SettingsModal,
   useSnakeGame,
 } from '@/features/snake-game';
 
 function App() {
-  const { gameState, hasStarted, isPaused, statusMessage, applyDirection, restartGame, togglePause, startIfNeeded } =
-    useSnakeGame(DEFAULT_GRID_SIZE);
+  const {
+    gameState,
+    settings,
+    hasStarted,
+    isPaused,
+    isSettingsOpen,
+    nextLetter,
+    statusMessage,
+    applyDirection,
+    restartGame,
+    togglePause,
+    startIfNeeded,
+    openSettings,
+    closeSettings,
+    saveSettings,
+  } = useSnakeGame(DEFAULT_GRID_SIZE);
   const { highScore, apiError, submitScore } = useHighScore();
 
   const handlePauseButton = useCallback(() => {
@@ -36,20 +51,18 @@ function App() {
       <section className="rounded-lg border border-stone-300 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
         <GameControls
           score={gameState.score}
+          nextLetter={nextLetter}
           highScore={highScore}
           isPaused={isPaused}
+          onOpenSettings={openSettings}
           onRestart={restartGame}
           onPauseToggle={handlePauseButton}
         />
 
         <div className="relative mt-4 flex justify-center">
-          <GameBoard
-            snake={gameState.snake}
-            food={gameState.food}
-            gridSize={DEFAULT_GRID_SIZE}
-          />
+          <GameBoard snake={gameState.snake} foods={gameState.foods} gridSize={DEFAULT_GRID_SIZE} />
           <GameOverlay
-            visible={!hasStarted || gameState.gameOver || isPaused}
+            visible={!hasStarted || gameState.gameOver || (isPaused && !isSettingsOpen)}
             message={statusMessage}
           />
         </div>
@@ -57,9 +70,16 @@ function App() {
         <MobileDirectionPad onDirection={applyDirection} />
 
         <p className="mt-4 text-sm text-stone-600">
-          操作: Arrow keys / WASD / Space。{apiError ? `API: ${apiError}` : 'API接続: OK'}
+          操作: Arrow keys / WASD / Space。A から Z まで順番に集め、ダミー文字に触れると終了。{apiError ? `API: ${apiError}` : 'API接続: OK'}
         </p>
       </section>
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        settings={settings}
+        onClose={closeSettings}
+        onSave={saveSettings}
+      />
     </main>
   );
 }
