@@ -9,8 +9,8 @@ import {
   type Direction,
   type GameState,
 } from './lib/snake';
-
-const TICK_MS = 120;
+import { DEFAULT_SETTINGS, SPEED_VALUES, type GameSettings } from './lib/settings';
+import { Settings } from './Settings';
 
 type CellType = 'empty' | 'head' | 'body' | 'target';
 type SnakeCellType = 'head' | 'body';
@@ -23,6 +23,8 @@ function App() {
   const [isPaused, setIsPaused] = useState(true);
   const [highScore, setHighScore] = useState<number | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const submittedRef = useRef(false);
 
   const isRunning = hasStarted && !isPaused && !gameState.gameOver;
@@ -44,14 +46,15 @@ function App() {
       return;
     }
 
+    const tickMs = SPEED_VALUES[settings.speed];
     const timer = window.setInterval(() => {
-      setGameState((prev) => stepGame(prev, DEFAULT_GRID_SIZE));
-    }, TICK_MS);
+      setGameState((prev) => stepGame(prev, DEFAULT_GRID_SIZE, Math.random));
+    }, tickMs);
 
     return () => {
       window.clearInterval(timer);
     };
-  }, [isRunning]);
+  }, [isRunning, settings.speed]);
 
   useEffect(() => {
     if (!hasStarted || !gameState.gameOver || submittedRef.current) {
@@ -112,8 +115,25 @@ function App() {
     togglePause();
   }, [hasStarted, startIfNeeded, togglePause]);
 
+  const handleSettingsSave = useCallback((newSettings: GameSettings) => {
+    setSettings(newSettings);
+  }, []);
+
+  const handleSettingsOpen = useCallback(() => {
+    setIsSettingsOpen(true);
+    setIsPaused(true);
+  }, []);
+
+  const handleSettingsClose = useCallback(() => {
+    setIsSettingsOpen(false);
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (isSettingsOpen) {
+        return;
+      }
+
       const key = event.key.toLowerCase();
 
       if (key === ' ') {
@@ -159,7 +179,7 @@ function App() {
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [applyDirection, gameState.gameOver, hasStarted, restartGame, startIfNeeded, togglePause]);
+  }, [applyDirection, gameState.gameOver, hasStarted, isSettingsOpen, restartGame, startIfNeeded, togglePause]);
 
   const targetKey = gameState.targetCell
     ? `${gameState.targetCell.x},${gameState.targetCell.y}`
@@ -243,6 +263,13 @@ function App() {
           </p>
           <button
             type="button"
+            onClick={handleSettingsOpen}
+            className="rounded-md border border-stone-300 bg-stone-100 px-3 py-2 text-sm hover:bg-stone-200"
+          >
+            設定
+          </button>
+          <button
+            type="button"
             onClick={restartGame}
             className="rounded-md border border-stone-300 bg-stone-100 px-3 py-2 text-sm hover:bg-stone-200"
           >
@@ -314,6 +341,13 @@ function App() {
           操作: Arrow keys / WASD / Space。A から Z まで順番に集める。{apiError ? `API: ${apiError}` : 'API接続: OK'}
         </p>
       </section>
+
+      <Settings
+        isOpen={isSettingsOpen}
+        settings={settings}
+        onClose={handleSettingsClose}
+        onSave={handleSettingsSave}
+      />
     </main>
   );
 }

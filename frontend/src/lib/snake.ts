@@ -101,6 +101,7 @@ export function stepGame(
   state: GameState,
   gridSize = DEFAULT_GRID_SIZE,
   rng: () => number = Math.random,
+  questionFormat: 'sequential' | 'random' = 'sequential',
 ): GameState {
   if (state.gameOver) {
     return state;
@@ -157,7 +158,18 @@ export function stepGame(
 
   if (ateTarget) {
     const isCycleCompleted = state.targetLetterIndex === ALPHABET.length - 1;
-    nextTargetLetterIndex = (state.targetLetterIndex + 1) % ALPHABET.length;
+    if (questionFormat === 'random') {
+      // Ensure a different letter is selected to avoid confusion
+      if (ALPHABET.length > 1) {
+        const availableIndices = Array.from({ length: ALPHABET.length }, (_, i) => i)
+          .filter((i) => i !== state.targetLetterIndex);
+        nextTargetLetterIndex = availableIndices[Math.floor(rng() * availableIndices.length)];
+      } else {
+        nextTargetLetterIndex = 0;
+      }
+    } else {
+      nextTargetLetterIndex = (state.targetLetterIndex + 1) % ALPHABET.length;
+    }
     nextCompletedCycles = isCycleCompleted ? state.completedCycles + 1 : state.completedCycles;
     nextTargetCell = placeTargetCell(nextSnake, gridSize, rng);
     nextScore += 1;
