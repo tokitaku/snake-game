@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { DummyCount, GameSettings, GameSpeed } from '@/features/snake-game/model/settings';
 import { DUMMY_COUNT_LABELS, SPEED_LABELS } from '@/features/snake-game/model/settings';
 
@@ -8,7 +9,27 @@ type SettingsModalProps = {
   onSave: (settings: GameSettings) => void;
 };
 
+const DUMMY_COUNT_OPTIONS = [2, 3, 4, 5] as const satisfies readonly DummyCount[];
+
 export function SettingsModal({ isOpen, settings, onClose, onSave }: SettingsModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    previousActiveElementRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    dialogRef.current?.focus();
+
+    return () => {
+      previousActiveElementRef.current?.focus();
+      previousActiveElementRef.current = null;
+    };
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
@@ -23,6 +44,7 @@ export function SettingsModal({ isOpen, settings, onClose, onSave }: SettingsMod
 
   return (
     <div
+      ref={dialogRef}
       className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
       role="dialog"
       aria-modal="true"
@@ -71,7 +93,7 @@ export function SettingsModal({ isOpen, settings, onClose, onSave }: SettingsMod
             <h3 className="mb-2 text-sm font-medium text-stone-700">ダミーの数</h3>
             <p className="mb-2 text-xs text-stone-500">変更は次回リスタートから反映されます。</p>
             <div className="space-y-2">
-              {(Object.keys(DUMMY_COUNT_LABELS) as unknown as DummyCount[]).map((dummyCount) => (
+              {DUMMY_COUNT_OPTIONS.map((dummyCount) => (
                 <label key={dummyCount} className="flex cursor-pointer items-center gap-2">
                   <input
                     type="radio"

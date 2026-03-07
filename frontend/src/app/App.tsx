@@ -53,6 +53,7 @@ function App() {
           score={gameState.score}
           nextLetter={nextLetter}
           highScore={highScore}
+          hasStarted={hasStarted}
           isPaused={isPaused}
           onOpenSettings={openSettings}
           onRestart={restartGame}

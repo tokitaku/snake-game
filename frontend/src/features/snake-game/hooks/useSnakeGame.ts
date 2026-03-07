@@ -43,9 +43,13 @@ export function useSnakeGame(gridSize = DEFAULT_GRID_SIZE): UseSnakeGameResult {
   const isRunning = hasStarted && !isPaused && !gameState.gameOver;
 
   const startIfNeeded = useCallback(() => {
+    if (hasStarted) {
+      return;
+    }
+
     setHasStarted(true);
     setIsPaused(false);
-  }, []);
+  }, [hasStarted]);
 
   const applyDirection = useCallback(
     (direction: Direction) => {
@@ -54,9 +58,12 @@ export function useSnakeGame(gridSize = DEFAULT_GRID_SIZE): UseSnakeGameResult {
       }
 
       setGameState((previousState) => setDirection(previousState, direction));
-      startIfNeeded();
+
+      if (!hasStarted) {
+        startIfNeeded();
+      }
     },
-    [gameState.gameOver, startIfNeeded],
+    [gameState.gameOver, hasStarted, startIfNeeded],
   );
 
   const restartGame = useCallback(() => {

@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@/shared/config/env';
 
-export type HighScoreResponse = {
+type HighScoreResponse = {
   high_score: number;
 };
 
